@@ -1,0 +1,36 @@
+#display {
+    margin-bottom: 10px;
+    border-radius: 1px, 1px, 1px, 1px;
+    border-color: #000000;
+}
+#calcContainer {
+    align-items: center;
+    padding: 50px, 50px, 50px, 100px;
+}
+.calcBtnRow {
+    padding: 1;
+}
+.calcBtn {
+    display: inline-block;
+    color: #000000; 
+}
+.calcBtn input {
+    width: 100px;
+}
+input.operator {
+    color: rgb(250, 215, 18);
+}
+.calcBtn input {
+    width: 25px;
+    height: 25px;
+    padding: 1px, 6px, 1px, 6px;
+    background-color: rgba(175, 172, 172, 0.986);
+    border-color: #000000;
+}
+.calcBtnSolve input {
+    width: 112px;
+    height: 25px;
+    padding: 1px, 6px, 1px, 6px;
+    background-color: rgb(2, 172, 2);
+    border-color: #000000;
+}
