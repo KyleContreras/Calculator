@@ -6,27 +6,29 @@
         <div class="calcContainer">
             <input type="text" name="display" id="display" disabled>
             <div class="calcBtnRow">
-                <div class="calcBtn"><input type="button" name="seven" value="7" onclick="calcObj.checkHistory(7)"></div>
-                <div class="calcBtn"><input type="button" name="eight" value="8" onclick="calcObj.checkHistory(8)"></div>
-                <div class="calcBtn"><input type="button" name="nine" value="9" onclick="calcObj.checkHistory(9)"></div>
+                <div class="calcBtn"><input type="button" name="seven" value="7" onclick="calcObj.checkIfNeg(7)"></div>
+                <div class="calcBtn"><input type="button" name="eight" value="8" onclick="calcObj.checkIfNeg(8)"></div>
+                <div class="calcBtn"><input type="button" name="nine" value="9" onclick="calcObj.checkIfNeg(9)"></div>
                 <div class="calcBtn"><input type="button" class ="operator" name="plus" value="+" onclick="calcObj.checkHistory('+')"></div>
+                <div class="calcBtn"><input type="button" id="clear" name="clear" value="c" onclick="calcObj.clear()"></div>
             </div>
             <div class="calcBtnRow">
-                <div class="calcBtn"><input type="button" name="four" value="4" onclick="calcObj.checkHistory(4)"></div>
-                <div class="calcBtn"><input type="button" name="five" value="5" onclick="calcObj.checkHistory(5)"></div>
-                <div class="calcBtn"><input type="button" name="six" value="6" onclick="calcObj.checkHistory(6)"></div>
+                <div class="calcBtn"><input type="button" name="four" value="4" onclick="calcObj.checkIfNeg(4)"></div>
+                <div class="calcBtn"><input type="button" name="five" value="5" onclick="calcObj.checkIfNeg(5)"></div>
+                <div class="calcBtn"><input type="button" name="six" value="6" onclick="calcObj.checkIfNeg(6)"></div>
                 <div class="calcBtn"><input type="button" class ="operator" name="minus" value="-" onclick="calcObj.checkHistory('-')"></div>
+                <div class="calcBtn"><input type="button" class ="neg" name="negate" value="-n" onclick="calcObj.makeNeg()"></div>
             </div>
             <div class="calcBtnRow">
-                <div class="calcBtn"><input type="button" name="one" value="1" onclick="calcObj.checkHistory(1)"></div>
-                <div class="calcBtn"><input type="button" name="two" value="2" onclick="calcObj.checkHistory(2)"></div>
-                <div class="calcBtn"><input type="button" name="three" value="3" onclick="calcObj.checkHistory(3)"></div>
+                <div class="calcBtn"><input type="button" name="one" value="1" onclick="calcObj.checkIfNeg(1)"></div>
+                <div class="calcBtn"><input type="button" name="two" value="2" onclick="calcObj.checkIfNeg(2)"></div>
+                <div class="calcBtn"><input type="button" name="three" value="3" onclick="calcObj.checkIfNeg(3)"></div>
                 <div class="calcBtn"><input type="button" class ="operator" name="times" value="*" onclick="calcObj.checkHistory('*')"></div>
             </div>
             <div class="calcBtnRow">
-                <div class="calcBtn"><input type="button" id="clear" name="clear" value="c" onclick="calcObj.clear()"></div>
                 <div class="calcBtn"><input type="button" name="zero" value="0" onclick="calcObj.checkHistory(0)"></div>
-                <div class="calcBtn"><input type="button" name="parenthesis" value="()" onclick=""></div>
+                <div class="calcBtn"><input type="button" name="open-prnthsis" value="(" onclick="calcObj.checkHistory('(')"></div>
+                <div class="calcBtn"><input type="button" name="close-prnthsis" value=")" onclick="calcObj.checkHistory(')')"></div>
                 <div class="calcBtn"><input type="button" class ="operator" name="divide" value="/" onclick="calcObj.checkHistory('/')"></div>  
             </div>
             <div class="calcBtnRow">
