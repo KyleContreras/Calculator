@@ -43,12 +43,6 @@ var calcObj = {
         }
 
         this.addHstryAndOop(input);
-
-        /*
-        if(isNaN(input) && input !== ')') {
-            this.addToCurrentOop(input)
-        }
-        */
     },
 
     makeExpHistory: function (objName, propName, value) {
@@ -59,96 +53,73 @@ var calcObj = {
             writable : true,
         });
     },
-
-    // TODO
-    nestedArrayCheck: function (crntExpProp, nstdArray, input) {
-        let expProp = crntExpProp;
-        let isThisNstdArray = nstdArray;
-        let crntInput = input === '(' ? [] : input;
-        let clsdPrnthCnt = this.closedPrnthCnt;
-        let newNstdArray;
-
-        if (Array.isArray(isThisNstdArray[isThisNstdArray.length - 1])) {
-            newNstdArray = isThisNstdArray[isThisNstdArray.length - 1];
     
-            this.nestedArrayCheck(expProp, newNstdArray, crntInput);
-        } else if (Array.isArray(isThisNstdArray) && clsdPrnthCnt > 1) {
-            if (newNstdArray = this.nstdArrayRef(expProp, clsdPrnthCnt)) {
-                newNstdArray.push(crntInput);
-            } else {
-                isThisNstdArray.push(crntInput);
-            }
-            //newNstdArray.push(crntInput);
-            //isThisNstdArray.push(crntInput);
+    // TODO: little difference between this and nAR. How do I get rid of one?
+    findDpstNstdArray: function (anArray) {
+        if (Array.isArray(anArray[anArray.length - 1])) {
+            let newNstdArray = anArray[anArray.length - 1];
+    
+            return this.findDpstNstdArray(newNstdArray);
+        }
+
+        return anArray;
+    },
+
+    // Called while parenthesesCount === closedParenthesesCount
+    nestedArrayCheck: function (anArray, input) {
+        let clsdPrnthCnt = this.closedPrnthCnt;
+
+        if (this.parenthesesCount > clsdPrnthCnt) {
+            let newNstdArray = this.nstdArrayRef(anArray, clsdPrnthCnt)
+            newNstdArray.push(input);
         } else {
-            expProp.push(crntInput);
+            let crntArray = this.findDpstNstdArray(anArray);
+            crntArray.push(input);
         }
     },
 
-    nstdArrayRef: function (expProp, parenthesesCount) {
-        let cpyExpProp = expProp;
-        let nstdArrayIndex;
-        let clsdPrnth = parenthesesCount;
+    // TODO: little difference between this and fLA. How do I get rid of one?
+    nstdArrayRef: function (anArray, clsdPrnth) {
+        let crntArray = anArray[anArray.length - 1];
 
-        if (this.parenthesesCount > clsdPrnth && clsdPrnth > 1) {
-            nstdArrayIndex = cpyExpProp[cpyExpProp.length - 1];
-            clsdPrnth--
+        if (clsdPrnth > 1 && Array.isArray(crntArray)) {
+            let newClsdPrnthCnt = --clsdPrnth;
 
-            this.nstdArrayRef(nstdArrayIndex, clsdPrnth);
+            return this.nstdArrayRef(crntArray, newClsdPrnthCnt);
         }
 
-        return nstdArrayIndex;
+        return anArray;
     },
 
-    // Goal of fx: place input in correct spot of history object
-    // Watch out for referencing an undefined property and testing with .isArray()
     addHstryAndOop: function(input) {
         let expCnt = this.expressionCount;
         let crntHstryExp = this.history['expression ' + (this.historyCount)];
         let expProp = crntHstryExp[expCnt];
+        let crntInput = input === '(' ? [] : input;
 
-        // How do I simplify this and '|| Array.isArray(expProp)'
-        if (input === '(') {
+        if(Array.isArray(crntInput)) {
             this.parenthesesCount++;
             this.closedPrnthCnt++;
+        }
 
-            if(Array.isArray(expProp)) {
-                let isThisNstdArray;
-
-                // I don't think this is quite right. Can never reference the 0 index
-                // Should this if check against 0 instead of 1?
-                // Shouldn't parenthesesCount be > 1 as well?
-                if (expProp.length - 1 > 1) {
-                    isThisNstdArray = expProp[(expProp.length - 1)];
-                } else {
-                    isThisNstdArray = expProp;
-                }
-                
-                this.nestedArrayCheck(expProp, isThisNstdArray, input);
-            } else {
-                this.makeExpHistory(crntHstryExp, expCnt, [])
-            }
-        } else if (input === ')') {
+        if (crntInput === ')') {
             this.closedPrnthCnt--;
 
             if(this.closedPrnthCnt === 0) {
+                this.parenthesesCount = 0;
                 this.expressionCount++;
             }
-        } else if (Array.isArray(expProp)) {
-            let isThisNstdArray;
-
-            if (expProp.length - 1 > 1) {
-                isThisNstdArray = expProp[(expProp.length - 1)];
-            } else {
-                isThisNstdArray = expProp;
-            }
-            
-            this.nestedArrayCheck(expProp, isThisNstdArray, input);
-        } else {
-            this.makeExpHistory(crntHstryExp, expCnt, input);
+        } else if (this.parenthesesCount === 0) {
+            this.makeExpHistory(crntHstryExp, expCnt, crntInput)
             this.expressionCount++;
+        } else if (Array.isArray(expProp)) {
+            this.nestedArrayCheck(expProp, crntInput);
+        } else {
+            // TODO: How can I get rid of this?
+            // Only works when first set of () is added. prnthCnt is incremented before the check
+            this.makeExpHistory(crntHstryExp, expCnt, crntInput)
         }
-        
+
         this.calcDisplay(input);
         // Test
         console.log(this.history);
@@ -161,18 +132,6 @@ var calcObj = {
     // TODO
     addToCurrentOop: function(input) {
         let crntOop = this.currentOop;
-        /*
-        let expCnt = this.expressionCount;
-        let crntHstryExp = this.history['expression ' + (this.historyCount)];
-        let expProp;
-
-        // Ugly solution
-        if (expCnt === 0) {
-            expProp = crntHstryExp[expCnt];
-        } else {
-            expProp = crntHstryExp[expCnt - 1];
-        }
-        */
 
         // dupOpCheck = crntExp.length -- Is it necessary now?
         if (Array.isArray(input)) {
@@ -187,6 +146,7 @@ var calcObj = {
         console.log(this.currentOop);
     },
     
+    // TODO
     concatOopArrays: function () {
         let crntOop = this.currentOop;
         let OopReplacement = [];
