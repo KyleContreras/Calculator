@@ -1,26 +1,37 @@
 "use strict";
 
 var calcObj = {
-    // Should I move these into history{}?
+    // TODO: Should I create a getter/setter for these counters?
+    // TODO: How should I handle clearing/resetting these?
     historyCount: 0,
     expressionCount: 0,
-    
     parenthesesCount: 0,
     closedPrnthCnt: 0,
     
     makeNextNumNeg: 0,
 
     currentExpression: [],   
-    currentOop: [[],[],[]],
+    //currentOop: [[],[],[]],
+
+    currentOop: [{},[],[]],
 
     history: {},
 
-    calcDisplay: (input) => {
-        let elmnt = document.getElementById('display');
-        elmnt.value += input + ' ';
+    Oop: {},
 
-        //elem = document.getElementById('display');
-        //elem.value = '';
+    calcDisplay: function(input) {
+        let elmnt = document.getElementById('display');
+        //let crntInput = input === '(' ? [] : input;
+
+
+        if (Array.isArray(input)) {
+            elmnt.value += '(' + ' ';
+        } else if (input === '') {
+            elmnt.value = '';
+            this.resetCounters();
+        } else {
+            elmnt.value += input + ' ';
+        }
     },
 
     checkIfNeg: function(input) {
@@ -32,17 +43,23 @@ var calcObj = {
         }
     },
 
+    // TODO: How can I better handle this?
     makeNeg: function () {
         this.makeNextNumNeg = -1;
     },
 
+    // Add to calcDisplay here for now
     checkHistory: function(input) {
+        let crntInput = input === '(' ? [] : input;
+
         if(this.historyCount === 0) {
             this.historyCount++;
             this.makeExpHistory(this.history, 'expression ' + this.historyCount, {})
         }
 
-        this.addHstryAndOop(input);
+        this.addToHstry(crntInput);
+
+        //this.calcDisplay(crntInput);
     },
 
     makeExpHistory: function (objName, propName, value) {
@@ -53,99 +70,93 @@ var calcObj = {
             writable : true,
         });
     },
-    
-    // TODO: little difference between this and nAR. How do I get rid of one?
-    findDpstNstdArray: function (anArray) {
-        if (Array.isArray(anArray[anArray.length - 1])) {
-            let newNstdArray = anArray[anArray.length - 1];
-    
-            return this.findDpstNstdArray(newNstdArray);
-        }
 
-        return anArray;
-    },
-
-    // Called while parenthesesCount === closedParenthesesCount
-    nestedArrayCheck: function (anArray, input) {
-        let clsdPrnthCnt = this.closedPrnthCnt;
-
-        if (this.parenthesesCount > clsdPrnthCnt) {
-            let newNstdArray = this.nstdArrayRef(anArray, clsdPrnthCnt)
-            newNstdArray.push(input);
-        } else {
-            let crntArray = this.findDpstNstdArray(anArray);
-            crntArray.push(input);
-        }
-    },
-
-    // TODO: little difference between this and fLA. How do I get rid of one?
     nstdArrayRef: function (anArray, clsdPrnth) {
-        let crntArray = anArray[anArray.length - 1];
+        let checkForArray = anArray[anArray.length - 1];
 
-        if (clsdPrnth > 1 && Array.isArray(crntArray)) {
+        if (Array.isArray(checkForArray) && clsdPrnth > 1) {
             let newClsdPrnthCnt = --clsdPrnth;
 
-            return this.nstdArrayRef(crntArray, newClsdPrnthCnt);
+            return this.nstdArrayRef(checkForArray, newClsdPrnthCnt);
+        } else {
+            return anArray;
         }
 
-        return anArray;
+        //return anArray;
     },
 
-    addHstryAndOop: function(input) {
+    addToHstry: function(input) {
         let expCnt = this.expressionCount;
         let crntHstryExp = this.history['expression ' + (this.historyCount)];
         let expProp = crntHstryExp[expCnt];
-        let crntInput = input === '(' ? [] : input;
 
-        if(Array.isArray(crntInput)) {
+        if(Array.isArray(input)) {
             this.parenthesesCount++;
             this.closedPrnthCnt++;
         }
 
-        if (crntInput === ')') {
+        if (input === ')') {
             this.closedPrnthCnt--;
 
             if(this.closedPrnthCnt === 0) {
                 this.parenthesesCount = 0;
                 this.expressionCount++;
             }
-        } else if (this.parenthesesCount === 0) {
-            this.makeExpHistory(crntHstryExp, expCnt, crntInput)
-            this.expressionCount++;
         } else if (Array.isArray(expProp)) {
-            this.nestedArrayCheck(expProp, crntInput);
+            let arrayToUse = this.nstdArrayRef(expProp, this.closedPrnthCnt);
+            
+            arrayToUse.push(input);
         } else {
-            // TODO: How can I get rid of this?
-            // Only works when first set of () is added. prnthCnt is incremented before the check
-            this.makeExpHistory(crntHstryExp, expCnt, crntInput)
+            this.makeExpHistory(crntHstryExp, expCnt, input);
+
+            if (this.parenthesesCount === 0) {
+                this.expressionCount++;
+            }
         }
 
         this.calcDisplay(input);
+        
         // Test
         console.log(this.history);
     },
 
-    cnvrtHstryToArrayExp: function(exp) {
+    cnvrtHstryToArray: function(exp) {
         this.currentExpression = Object.values(exp);
+        console.log(this.currentExpression);
     },
     
-    // TODO
     addToCurrentOop: function(input) {
         let crntOop = this.currentOop;
+        let arrayToCheck = crntOop[0];
 
-        // dupOpCheck = crntExp.length -- Is it necessary now?
-        if (Array.isArray(input)) {
-            crntOop[0].push([]);
-        } else if ((input === '*' || input === '/') /*&& (input !== dupOpCheck)*/) {
+        if (this.closedPrnthCnt > 0) {
+            
+        } else if ((input === '*' || input === '/')) {
             crntOop[1].push(input);
-        } else if ((input === '+' || input === '-') /*&& (input !== dupOpCheck)*/) {
+        } else if ((input === '+' || input === '-')) {
             crntOop[2].push(input);
         }
-
         //Test
         console.log(this.currentOop);
     },
-    
+
+    oopSort: function(input) {
+        switch(input) {
+            case '(':
+                return 3;
+            case '*':
+                return 2;
+            case '/':
+                return 2;
+            case '+':
+                return 1;
+            case '-':
+                return 1;
+            default:
+                return 3;
+        }
+    },
+
     // TODO
     concatOopArrays: function () {
         let crntOop = this.currentOop;
@@ -160,7 +171,7 @@ var calcObj = {
         console.log(this.currentOop);
     },
 
-    // Splice second argument not dynamic to the situation.
+    // TODO
     OopCleanUp: function() {
         let operatorArray = this.currentOop;
         operatorArray.splice(0,2);
@@ -205,7 +216,7 @@ var calcObj = {
         }
     },
     
-    // can this be streamlined?
+    //TODO
     operatorReplacer: function(expStart, delCnt, solverAns) {
         var crntExp = this.currentExpression;
 
@@ -215,6 +226,9 @@ var calcObj = {
     // I put makeHistory() here for now?
     resetCounters: function () {
         this.expressionCount = 0;
+        this.parenthesesCount = 0;
+        this.clsdPrnthCnt = 0;
+        this.makeNextNumNeg = 0;
         this.currentExpression = [];
         this.currentOop = [[],[],[]];
 
@@ -228,19 +242,9 @@ var calcObj = {
     findAnswer: function() {
         let crntExp = this.history['expression ' + this.historyCount];
         
-        this.cnvrtHstryToArrayExp(crntExp);
-
-        this.addToCurrentOop();
+        this.cnvrtHstryToArray(crntExp);
         this.concatOopArrays();
-        this.operatorCompare();
-        this.resetCounters();
+        //this.operatorCompare();
+        //this.resetCounters();
     },
-    
-    // TODO: Make sure everything is reset accordingly.
-    clear: function() {
-        elem = document.getElementById('display');
-        elem.value = '';
-        
-        this.resetCounters();
-    } 
 };
