@@ -1,28 +1,27 @@
 "use strict";
 
+// TODO: look up binary expression trees
+
+// TODO:
+// BIG ERROR: I cannot put in numbers large than 9 into my calculator.
+// possible soln: create a var that holds an input, waiting to conat additional numbers to it...
+// ... if input is NaN then the input is pushed to the exp and oop objects as needed
+
 var calcObj = {
     // TODO: Should I create a getter/setter for these counters?
     // TODO: How should I handle clearing/resetting these?
     historyCount: 0,
     expressionCount: 0,
     parenthesesCount: 0,
-    closedPrnthCnt: 0,
-    
     makeNextNumNeg: 0,
 
     currentExpression: [],   
-    //currentOop: [[],[],[]],
-
     currentOop: [{},[],[]],
-
     history: {},
-
-    Oop: {},
 
     calcDisplay: function(input) {
         let elmnt = document.getElementById('display');
         //let crntInput = input === '(' ? [] : input;
-
 
         if (Array.isArray(input)) {
             elmnt.value += '(' + ' ';
@@ -48,43 +47,32 @@ var calcObj = {
         this.makeNextNumNeg = -1;
     },
 
-    // Add to calcDisplay here for now
     checkHistory: function(input) {
         let crntInput = input === '(' ? [] : input;
+        let crntInputOop = input === '(' ? [] : input;
 
         if(this.historyCount === 0) {
             this.historyCount++;
-            this.makeExpHistory(this.history, 'expression ' + this.historyCount, {})
+            this.makeObjProp(this.history, 'expression ' + this.historyCount, {})
         }
 
         this.addToHstry(crntInput);
 
-        //this.calcDisplay(crntInput);
+        if (isNaN(crntInputOop) && crntInputOop !== ')' || Array.isArray(crntInputOop)) {
+            this.addToCurrentOop(crntInputOop); 
+        }
     },
-
-    makeExpHistory: function (objName, propName, value) {
+    
+    makeObjProp: function(objName, propName, value) {
         Object.defineProperty(objName, propName, {
-            value: value,
             configurable: true,
             enumerable: true,
             writable : true,
+            value: value,
         });
     },
 
-    nstdArrayRef: function (anArray, clsdPrnth) {
-        let checkForArray = anArray[anArray.length - 1];
-
-        if (Array.isArray(checkForArray) && clsdPrnth > 1) {
-            let newClsdPrnthCnt = --clsdPrnth;
-
-            return this.nstdArrayRef(checkForArray, newClsdPrnthCnt);
-        } else {
-            return anArray;
-        }
-
-        //return anArray;
-    },
-
+    // TODO: Refactor
     addToHstry: function(input) {
         let expCnt = this.expressionCount;
         let crntHstryExp = this.history['expression ' + (this.historyCount)];
@@ -92,29 +80,53 @@ var calcObj = {
 
         if(Array.isArray(input)) {
             this.parenthesesCount++;
-            this.closedPrnthCnt++;
         }
 
         if (input === ')') {
-            this.closedPrnthCnt--;
-
-            if(this.closedPrnthCnt === 0) {
-                this.parenthesesCount = 0;
-                this.expressionCount++;
-            }
-        } else if (Array.isArray(expProp)) {
-            let arrayToUse = this.nstdArrayRef(expProp, this.closedPrnthCnt);
+            this.parenthesesCount--;    
+        } else if (typeof expProp === 'object') {
+            //let crctIndex = crctprnthLvl.length - 1;
             
-            arrayToUse.push(input);
-        } else {
-            this.makeExpHistory(crntHstryExp, expCnt, input);
+            if (Array.isArray(input)) {
+                let crctprnthLvl = expProp['prnthLvl ' + (this.parenthesesCount - 1)];
+                let crctIndex = crctprnthLvl.length - 1;
 
-            if (this.parenthesesCount === 0) {
-                this.expressionCount++;
+                crctprnthLvl[crctIndex].push('(');
+                
+                if (!expProp['prnthLvl ' + this.parenthesesCount]) {
+                    this.makeObjProp(expProp, 'prnthLvl ' + this.parenthesesCount, input);
+                }
+
+                // TODO: How can I refactor this?
+                expProp = crntHstryExp[expCnt];
+ 
+                expProp['prnthLvl ' + this.parenthesesCount].push([]);
+            } else {
+                let crctNstdArray = expProp['prnthLvl ' + this.parenthesesCount];
+                let crctIndex = crctNstdArray.length - 1;
+                
+                crctNstdArray[crctIndex].push(input);
+            }
+        } else {
+            if (Array.isArray(input) && this.parenthesesCount === 1) {
+                this.makeObjProp(crntHstryExp, expCnt, {});
+
+                // TODO: How can I refactor this?
+                expProp = crntHstryExp[expCnt];
+
+                this.makeObjProp(expProp, 'prnthLvl ' + this.parenthesesCount, input);
+                
+                expProp['prnthLvl ' + this.parenthesesCount].push([]);
+            } else {
+                this.makeObjProp(crntHstryExp, expCnt, input);
             }
         }
 
-        this.calcDisplay(input);
+        if (this.parenthesesCount === 0) {
+                this.expressionCount++;
+        }
+
+        this.calcDisplay(input);        
         
         // Test
         console.log(this.history);
@@ -122,62 +134,135 @@ var calcObj = {
 
     cnvrtHstryToArray: function(exp) {
         this.currentExpression = Object.values(exp);
+
+        // Test
         console.log(this.currentExpression);
     },
+
+    findPrnthLvl: function(obj) {
+        let prnthLvl = 'prnthLevel ';
+        let prnthCnt = this.parenthesesCount;
+        let crctObj = obj[prnthLvl + prnthCnt];
+
+        if (crctObj) {
+            prnthCnt--;
+        }
+
+        return prnthCnt;
+    },
+
+    // Should I compare strings? to see what to set the next appropriate level as?
+    findPrnthSetCount: function(obj, crntInput) {
+        let prnthSet = 'prnthSet ';
+        let nmbrOfProps = this.findObjLength(obj);
+        let prnthSetTest = obj[prnthSet + nmbrOfProps];
+        //let nmbrOfProps = Object.keys(obj).length
+
+        if (prnthSetTest && nmbrOfProps > 0) {
+            if(Array.isArray(crntInput)) {
+                nmbrOfProps++;    
+            }
+        } else if (nmbrOfProps === 0) {
+            nmbrOfProps = 1;
+        }
+
+        return nmbrOfProps;
+
+        //return (nmbrOfProps ? nmbrOfProps : 1);
+    },
     
+    findObjLength: function(obj) {
+        let objLen = Object.keys(obj).length
+
+        return objLen;
+    },
+
+    pushToCrctArray: function(obj, oprtr) {
+        let oopObj = obj;
+        let oprtrValue = this.oopValues(oprtr);
+
+        oopObj[oprtrValue].push(oprtr);
+    },
+
     addToCurrentOop: function(input) {
         let crntOop = this.currentOop;
-        let arrayToCheck = crntOop[0];
+        
+        if (this.parenthesesCount === 0) {
+            this.pushToCrctArray(crntOop, input);
+        } else { 
+            let indexZero = crntOop[0];
+            let prnthCnt = this.parenthesesCount;
+            let prnthLvl = 'prnthLevel ' + prnthCnt;
+            let oopObj = indexZero[prnthLvl];
 
-        if (this.closedPrnthCnt > 0) {
-            
-        } else if ((input === '*' || input === '/')) {
-            crntOop[1].push(input);
-        } else if ((input === '+' || input === '-')) {
-            crntOop[2].push(input);
+            let prnthSetCnt;
+            let prnthSet;
+
+            if (Array.isArray(input)) {
+                let arrayOop = [[],[],[]];
+
+                if (oopObj) {
+                    //let prevPrnthCnt = prnthCnt - 1;
+                    //let prevPrnthLvl = 'prnthLevel ' + prnthCnt - 1;
+                    let prevPrnthLvl = 'prnthLevel ' + this.findPrnthLvl(indexZero);
+                    let oldOopObj = indexZero[prevPrnthLvl];
+                    let prevPrnthSetCnt = this.findPrnthSetCount(oldOopObj, input);
+                    let prevPrnthSet = 'prnthSet ' + prevPrnthSetCnt;
+
+                    let crctPrevObj = oldOopObj[prevPrnthSet];
+
+                    this.pushToCrctArray(crctPrevObj, '(');
+                } else {
+                    this.makeObjProp(indexZero, prnthLvl, {});
+
+                    oopObj = indexZero[prnthLvl];
+                }
+                prnthSetCnt = this.findPrnthSetCount(oopObj, input);
+                prnthSet = 'prnthSet ' + prnthSetCnt;
+                
+                this.makeObjProp(oopObj, prnthSet, arrayOop);
+            } else {
+                prnthSetCnt = this.findPrnthSetCount(oopObj, input);
+                prnthSet = 'prnthSet ' + prnthSetCnt;
+
+                let crctNstdArray = oopObj[prnthSet];
+                
+                this.pushToCrctArray(crctNstdArray, input);
+            }
         }
         //Test
         console.log(this.currentOop);
     },
 
-    oopSort: function(input) {
+    oopValues: function(input) {
         switch(input) {
-            case '(':
-                return 3;
             case '*':
-                return 2;
             case '/':
-                return 2;
+                return 1;
             case '+':
-                return 1;
             case '-':
-                return 1;
+                return 2;
             default:
-                return 3;
+                return 0;
         }
     },
 
-    // TODO
+    // TODO:  
     concatOopArrays: function () {
-        let crntOop = this.currentOop;
-        let OopReplacement = [];
+        let prnthOop = this.currentOop[0];
+        let oopKeys = Object.keys(prnthOop);
 
-        for (let i = 0; i < crntOop.length; i++) {
-            crntOop[i].forEach((element) => {
-                OopReplacement.push(element);
-            })
-        }
-        this.currentOop = OopReplacement;
+        // Test
         console.log(this.currentOop);
     },
 
-    // TODO
+    // TODO: refactor
     OopCleanUp: function() {
         let operatorArray = this.currentOop;
         operatorArray.splice(0,2);
     },
 
-    // TODO
+    // TODO: Refactor 
     operatorCompare: function() {
         let crntOop = this.currentOop;
         let crntExp = this.currentExpression;
@@ -216,7 +301,7 @@ var calcObj = {
         }
     },
     
-    //TODO
+    //TODO: Refactor
     operatorReplacer: function(expStart, delCnt, solverAns) {
         var crntExp = this.currentExpression;
 
@@ -227,7 +312,6 @@ var calcObj = {
     resetCounters: function () {
         this.expressionCount = 0;
         this.parenthesesCount = 0;
-        this.clsdPrnthCnt = 0;
         this.makeNextNumNeg = 0;
         this.currentExpression = [];
         this.currentOop = [[],[],[]];
@@ -241,8 +325,10 @@ var calcObj = {
     // Should this only call cnvrtHstryToArrayExp()?
     findAnswer: function() {
         let crntExp = this.history['expression ' + this.historyCount];
+        //let prnthOop = this.currentOop[0];
         
         this.cnvrtHstryToArray(crntExp);
+        
         this.concatOopArrays();
         //this.operatorCompare();
         //this.resetCounters();
