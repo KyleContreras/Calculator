@@ -139,10 +139,17 @@ var calcObj = {
         console.log(this.currentExpression);
     },
 
-    findPrnthLvl: function(obj) {
+    findOopObj: function(obj, input) {
+        let prnthLvl = this.findPrnthLvl()
+    },
+
+    findPrnthLvl: function(obj, input) {
         let prnthLvl = 'prnthLevel ';
         let prnthCnt = this.parenthesesCount;
-        let crctObj = obj[prnthLvl + prnthCnt];
+        let crntObj = obj[prnthLvl + prnthCnt];
+        let testObj = this.findOopObj(crntObj, input);
+
+        // I need to figure out how this fx and findOopObj will work in finding the correct prnthLevel
 
         if (crctObj) {
             prnthCnt--;
@@ -156,7 +163,6 @@ var calcObj = {
         let prnthSet = 'prnthSet ';
         let nmbrOfProps = this.findObjLength(obj);
         let prnthSetTest = obj[prnthSet + nmbrOfProps];
-        //let nmbrOfProps = Object.keys(obj).length
 
         if (prnthSetTest && nmbrOfProps > 0) {
             if(Array.isArray(crntInput)) {
@@ -167,14 +173,19 @@ var calcObj = {
         }
 
         return nmbrOfProps;
-
-        //return (nmbrOfProps ? nmbrOfProps : 1);
     },
     
     findObjLength: function(obj) {
         let objLen = Object.keys(obj).length
 
         return objLen;
+    },
+
+    checkForOopObj: function(obj) {
+        if (obj) {
+            // call the cascading set if functions that will add '(' to previous prnthLvl/Set
+        }
+        return;
     },
 
     pushToCrctArray: function(obj, oprtr) {
@@ -186,49 +197,14 @@ var calcObj = {
 
     addToCurrentOop: function(input) {
         let crntOop = this.currentOop;
+        let crntInput = input;
         
         if (this.parenthesesCount === 0) {
-            this.pushToCrctArray(crntOop, input);
+            this.pushToCrctArray(crntOop, crntInput);
         } else { 
             let indexZero = crntOop[0];
-            let prnthCnt = this.parenthesesCount;
-            let prnthLvl = 'prnthLevel ' + prnthCnt;
-            let oopObj = indexZero[prnthLvl];
-
-            let prnthSetCnt;
-            let prnthSet;
-
-            if (Array.isArray(input)) {
-                let arrayOop = [[],[],[]];
-
-                if (oopObj) {
-                    //let prevPrnthCnt = prnthCnt - 1;
-                    //let prevPrnthLvl = 'prnthLevel ' + prnthCnt - 1;
-                    let prevPrnthLvl = 'prnthLevel ' + this.findPrnthLvl(indexZero);
-                    let oldOopObj = indexZero[prevPrnthLvl];
-                    let prevPrnthSetCnt = this.findPrnthSetCount(oldOopObj, input);
-                    let prevPrnthSet = 'prnthSet ' + prevPrnthSetCnt;
-
-                    let crctPrevObj = oldOopObj[prevPrnthSet];
-
-                    this.pushToCrctArray(crctPrevObj, '(');
-                } else {
-                    this.makeObjProp(indexZero, prnthLvl, {});
-
-                    oopObj = indexZero[prnthLvl];
-                }
-                prnthSetCnt = this.findPrnthSetCount(oopObj, input);
-                prnthSet = 'prnthSet ' + prnthSetCnt;
-                
-                this.makeObjProp(oopObj, prnthSet, arrayOop);
-            } else {
-                prnthSetCnt = this.findPrnthSetCount(oopObj, input);
-                prnthSet = 'prnthSet ' + prnthSetCnt;
-
-                let crctNstdArray = oopObj[prnthSet];
-                
-                this.pushToCrctArray(crctNstdArray, input);
-            }
+            
+            this.findPrnthLvl(indexZero, crntInput);
         }
         //Test
         console.log(this.currentOop);
